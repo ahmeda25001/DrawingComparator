@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+myenv/
+myenv2/
+
+# macOS
+.DS_Store
+
+# Uploads and outputs
+uploads/
+output/
+comparison_results/
+
+# Environment variables and secrets
+.env
+.env.*
+OpenAI_API_Key.txt
+
+# Node (if you ever use React)
+node_modules/ 
+app.py

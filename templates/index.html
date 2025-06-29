@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Comparator</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', Arial, sans-serif;
+            background: linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%, #21d4fd 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.5s;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem 2rem 2rem 2rem;
+            border-radius: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            animation: popIn 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .ai-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #21d4fd 0%, #b721ff 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 24px 4px #b721ff44, 0 2px 8px #21d4fd33;
+            animation: glow 2s infinite alternate;
+        }
+        @keyframes glow {
+            0% { box-shadow: 0 0 24px 4px #b721ff44, 0 2px 8px #21d4fd33; }
+            100% { box-shadow: 0 0 36px 12px #21d4fd66, 0 2px 16px #b721ff33; }
+        }
+        .ai-icon svg {
+            width: 36px;
+            height: 36px;
+            fill: white;
+        }
+        h1 {
+            font-weight: 600;
+            font-size: 2rem;
+            margin-bottom: 1.2rem;
+            color: #3a3a5a;
+            letter-spacing: 1px;
+        }
+        .file-upload {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .file-upload label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #5a5a7a;
+        }
+        .file-upload input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 1rem;
+            border: 1.5px solid #e0e0f0;
+            background: #f7f8fa;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            transition: border 0.2s;
+        }
+        .file-upload input[type="file"]:focus {
+            border: 1.5px solid #21d4fd;
+            outline: none;
+        }
+        button {
+            background: linear-gradient(90deg, #21d4fd 0%, #b721ff 100%);
+            color: white;
+            padding: 0.8rem 2.2rem;
+            border: none;
+            border-radius: 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #b721ff22;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #b721ff 0%, #21d4fd 100%);
+            transform: scale(1.04);
+        }
+        .result {
+            margin-top: 2rem;
+            padding: 1.2rem;
+            border-radius: 1.2rem;
+            background: #f0f6ff;
+            box-shadow: 0 2px 8px #21d4fd11;
+            display: none;
+            text-align: left;
+            animation: fadeIn 0.7s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .error {
+            color: #ff3b3b;
+            margin-top: 1rem;
+            display: none;
+            font-weight: 600;
+            background: #fff0f0;
+            border-radius: 1rem;
+            padding: 0.7rem 1rem;
+        }
+        .differences {
+            margin-top: 0.7rem;
+            font-family: 'Fira Mono', monospace;
+            white-space: pre-wrap;
+            background: #eaf6ff;
+            padding: 0.8rem;
+            border-radius: 0.8rem;
+            color: #3a3a5a;
+            font-size: 0.98rem;
+        }
+        .disclaimer {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 0.8rem;
+            background: #f0f6ff;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #3a3a5a;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+                max-width: 98vw;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ai-icon">
+            <!-- AI/robot icon SVG -->
+            <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#fff" opacity="0.15"/><ellipse cx="24" cy="30" rx="10" ry="6" fill="#fff" opacity="0.2"/><circle cx="24" cy="24" r="14" fill="#21d4fd" opacity="0.7"/><ellipse cx="24" cy="24" rx="10" ry="10" fill="#b721ff" opacity="0.5"/><circle cx="24" cy="24" r="7" fill="#fff"/><circle cx="21" cy="22" r="1.5" fill="#21d4fd"/><circle cx="27" cy="22" r="1.5" fill="#b721ff"/></svg>
+        </div>
+        <h1>Drawing Comparator</h1>
+        <form id="uploadForm">
+            <div class="file-upload">
+                <label for="file1">Upload First Drawing:</label>
+                <input type="file" id="file1" name="file1" accept=".png,.jpg,.jpeg" required>
+            </div>
+            <div class="file-upload">
+                <label for="file2">Upload Second Drawing:</label>
+                <input type="file" id="file2" name="file2" accept=".png,.jpg,.jpeg" required>
+            </div>
+            <button type="submit">Compare Drawings</button>
+        </form>
+        <div id="error" class="error"></div>
+        <div id="result" class="result">
+            <h3>Comparison Results</h3>
+            <p>Similarity Score: <span id="similarityScore"></span></p>
+            <h4>Key Differences:</h4>
+            <div id="differences" class="differences"></div>
+        </div>
+        <button id="downloadBtn" style="display:none;margin-top:1rem;">Download Result</button>
+        <div class="disclaimer">
+            <span role="img" aria-label="ai">🤖</span> <b>Disclaimer:</b> This tool only analyzes <b>text similarity in drawings</b>.<br>
+            It does <b>not</b> analyze drawings or pictures without text.<br>
+            Powered by AI; results may contain mistakes.
+        </div>
+    </div>
+
+    <script>
+        let lastResult = null;
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('file1', document.getElementById('file1').files[0]);
+            formData.append('file2', document.getElementById('file2').files[0]);
+            
+            try {
+                const response = await fetch('/compare', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    lastResult = data;
+                    document.getElementById('error').style.display = 'none';
+                    document.getElementById('result').style.display = 'block';
+                    document.getElementById('similarityScore').textContent = 
+                        `${(data.similarity_score * 100).toFixed(2)}%`;
+                    document.getElementById('differences').textContent = 
+                        data.differences && data.differences.length > 0 ? data.differences.join('\n') : 'No major differences detected.';
+                    document.getElementById('downloadBtn').style.display = 'inline-block';
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    document.getElementById('error').textContent = errorData.error || 'An error occurred.';
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('result').style.display = 'none';
+                    document.getElementById('downloadBtn').style.display = 'none';
+                }
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('result').style.display = 'none';
+                document.getElementById('downloadBtn').style.display = 'none';
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            if (!lastResult) return;
+            try {
+                const response = await fetch('/download_result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lastResult)
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'comparison_result.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    alert('Failed to download result.');
+                }
+            } catch (error) {
+                alert('Failed to download result.');
+            }
+        });
+    </script>
+</body>
+</html> 
