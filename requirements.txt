@@ -1,6 +1,4 @@
 Flask==2.3.3
 Werkzeug==2.3.7
 Pillow==9.5.0
-easyocr==1.7.0
 setuptools>=65.0.0
-gunicorn
