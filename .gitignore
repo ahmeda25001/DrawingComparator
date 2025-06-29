@@ -23,5 +23,4 @@ comparison_results/
 OpenAI_API_Key.txt
 
 # Node (if you ever use React)
-node_modules/ 
-api/
+node_modules/

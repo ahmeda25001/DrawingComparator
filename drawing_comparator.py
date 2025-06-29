@@ -1,5 +1,5 @@
 import os
-import pytesseract
+import easyocr
 from PIL import Image
 from typing import Dict, List, Tuple
 import difflib
@@ -16,18 +16,24 @@ class ComparisonResult:
     file2_text: str
 
 class DrawingComparator:
-    def __init__(self, storage_dir: str = "comparison_results"):
-        """Initialize the DrawingComparator with a storage directory for results."""
-        self.storage_dir = storage_dir
-        if not os.path.exists(storage_dir):
-            os.makedirs(storage_dir)
+    def __init__(self):
+        """Initialize the DrawingComparator with EasyOCR reader."""
+        # Initialize EasyOCR reader (downloads models on first use)
+        self.reader = easyocr.Reader(['en'])
 
     def extract_text(self, image_path: str) -> str:
-        """Extract text from an image using OCR."""
+        """Extract text from an image using EasyOCR."""
         try:
-            image = Image.open(image_path)
-            text = pytesseract.image_to_string(image)
-            return text.strip()
+            # Read text from image
+            results = self.reader.readtext(image_path)
+            
+            # Extract text from results
+            text_lines = []
+            for (bbox, text, prob) in results:
+                if prob > 0.5:  # Only include text with >50% confidence
+                    text_lines.append(text)
+            
+            return '\n'.join(text_lines).strip()
         except Exception as e:
             raise Exception(f"Error processing image {image_path}: {str(e)}")
 
@@ -60,24 +66,7 @@ class DrawingComparator:
             file2_text=text2
         )
 
-        # Save the result
-        self._save_comparison_result(result)
-
         return result
-
-    def _save_comparison_result(self, result: ComparisonResult) -> None:
-        """Save the comparison result to a JSON file."""
-        filename = f"comparison_{result.timestamp.replace(':', '-')}.json"
-        filepath = os.path.join(self.storage_dir, filename)
-        
-        with open(filepath, 'w') as f:
-            json.dump({
-                'similarity_score': result.similarity_score,
-                'differences': result.differences,
-                'timestamp': result.timestamp,
-                'file1_text': result.file1_text,
-                'file2_text': result.file2_text
-            }, f, indent=2)
 
 # Example usage
 if __name__ == "__main__":
