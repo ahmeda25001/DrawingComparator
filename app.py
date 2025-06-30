@@ -10,6 +10,9 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
+SERVICE_KEY_PATH = "google-cloud-vision-key.json"
+comparator = DrawingComparator(SERVICE_KEY_PATH)
+
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -45,8 +48,7 @@ def compare_drawings():
         file1.save(filepath1)
         file2.save(filepath2)
         
-        # Compare drawings
-        comparator = DrawingComparator()
+        # Compare drawings using Google Cloud Vision
         result = comparator.compare_drawings(filepath1, filepath2)
         
         # Clean up uploaded files
@@ -85,4 +87,4 @@ def download_result():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)

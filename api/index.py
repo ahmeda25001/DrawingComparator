@@ -17,11 +17,14 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
 UPLOADS_DIR = os.path.join(PROJECT_ROOT, 'uploads')
+SERVICE_KEY_PATH = os.path.join(PROJECT_ROOT, "google-cloud-vision-key.json")
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
 app.config['UPLOAD_FOLDER'] = UPLOADS_DIR
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+comparator = DrawingComparator(SERVICE_KEY_PATH)
 
 # Create upload folder if it doesn't exist
 try:
@@ -76,8 +79,7 @@ def compare_drawings():
         
         logger.info("Files saved, starting comparison")
         
-        # Compare drawings
-        comparator = DrawingComparator()
+        # Compare drawings using Google Cloud Vision
         result = comparator.compare_drawings(filepath1, filepath2)
         
         logger.info("Comparison completed")
@@ -122,4 +124,4 @@ def download_result():
         )
     except Exception as e:
         logger.error(f"Error in download_result: {e}")
-        return jsonify({'error': str(e)}), 500 
+        return jsonify({'error': str(e)}), 500
