@@ -24,3 +24,5 @@ OpenAI_API_Key.txt
 
 # Node (if you ever use React)
 node_modules/
+
+google-cloud-vision-key.json
