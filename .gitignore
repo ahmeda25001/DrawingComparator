@@ -26,3 +26,4 @@ OpenAI_API_Key.txt
 node_modules/
 
 google-cloud-vision-key.json
+google-cloud-vision-key.json.base64
