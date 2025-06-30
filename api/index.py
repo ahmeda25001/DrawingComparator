@@ -17,14 +17,13 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
 UPLOADS_DIR = os.path.join(PROJECT_ROOT, 'uploads')
-SERVICE_KEY_PATH = os.path.join(PROJECT_ROOT, "google-cloud-vision-key.json")
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
 app.config['UPLOAD_FOLDER'] = UPLOADS_DIR
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-comparator = DrawingComparator(SERVICE_KEY_PATH)
+comparator = DrawingComparator()
 
 # Create upload folder if it doesn't exist
 try:
@@ -32,9 +31,6 @@ try:
     logger.info(f"Upload directory created/verified: {app.config['UPLOAD_FOLDER']}")
 except Exception as e:
     logger.error(f"Failed to create upload directory: {e}")
-
-# Example: Load API key from environment variable
-# api_key = os.environ.get('MY_API_KEY')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
