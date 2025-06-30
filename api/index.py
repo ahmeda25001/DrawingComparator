@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Get the absolute path to the project root (main directory)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
-UPLOADS_DIR = os.path.join(PROJECT_ROOT, 'uploads')
+UPLOADS_DIR = '/tmp'  # Use /tmp for Vercel compatibility
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
 app.config['UPLOAD_FOLDER'] = UPLOADS_DIR
@@ -64,11 +64,8 @@ def compare_drawings():
         logger.info(f"Processing files: {file1.filename}, {file2.filename}")
         
         # Save uploaded files
-        filename1 = secure_filename(file1.filename)
-        filename2 = secure_filename(file2.filename)
-        
-        filepath1 = os.path.join(app.config['UPLOAD_FOLDER'], filename1)
-        filepath2 = os.path.join(app.config['UPLOAD_FOLDER'], filename2)
+        filepath1 = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file1.filename))
+        filepath2 = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file2.filename))
         
         file1.save(filepath1)
         file2.save(filepath2)

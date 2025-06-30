@@ -6,7 +6,7 @@ import io
 import json
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = '/tmp'  # Use /tmp for Vercel compatibility
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
@@ -38,11 +38,8 @@ def compare_drawings():
     
     try:
         # Save uploaded files
-        filename1 = secure_filename(file1.filename)
-        filename2 = secure_filename(file2.filename)
-        
-        filepath1 = os.path.join(app.config['UPLOAD_FOLDER'], filename1)
-        filepath2 = os.path.join(app.config['UPLOAD_FOLDER'], filename2)
+        filepath1 = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file1.filename))
+        filepath2 = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file2.filename))
         
         file1.save(filepath1)
         file2.save(filepath2)
