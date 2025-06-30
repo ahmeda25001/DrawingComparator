@@ -10,8 +10,7 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-SERVICE_KEY_PATH = "google-cloud-vision-key.json"
-comparator = DrawingComparator(SERVICE_KEY_PATH)
+comparator = DrawingComparator()
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
