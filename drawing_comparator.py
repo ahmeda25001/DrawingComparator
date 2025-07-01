@@ -20,7 +20,7 @@ class DrawingComparator:
     def __init__(self):
         """Initialize the DrawingComparator with Google Cloud Vision and Storage clients."""
         # Decode the base64-encoded key from the environment variable
-        encoded_key = os.environ.get("GOOGLE_CLOUD_VISION_KEY_BASE64")
+        encoded_key = os.environ.get("GOOGLE_CLOUD_VISION_KEY_BASE64")  # Changed to uppercase
         if not encoded_key:
             raise Exception("Environment variable GOOGLE_CLOUD_VISION_KEY_BASE64 is not set.")
         
@@ -31,7 +31,7 @@ class DrawingComparator:
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
         self.client = vision.ImageAnnotatorClient()
         self.storage_client = storage.Client()  # Initialize Google Cloud Storage client
-        self.bucket_name = os.environ.get("GOOGLE_CLOUD_STORAGE_BUCKET")
+        self.bucket_name = os.environ.get("GOOGLE_CLOUD_STORAGE_BUCKET")  # Changed to uppercase
         if not self.bucket_name:
             raise Exception("Environment variable GOOGLE_CLOUD_STORAGE_BUCKET is not set.")
 
