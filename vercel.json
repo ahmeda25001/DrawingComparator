@@ -7,7 +7,7 @@
     { "src": "/(.*)", "dest": "api/index.py" }
   ],
   "env": {
-    "GOOGLE_CLOUD_STORAGE_BUCKET": "your-gcs-bucket-name",
-    "GOOGLE_CLOUD_VISION_KEY_BASE64": "@google_cloud_vision_key_base64"
+    "GOOGLE_CLOUD_STORAGE_BUCKET": "@GOOGLE_CLOUD_STORAGE_BUCKET",
+    "GOOGLE_CLOUD_VISION_KEY_BASE64": "@GOOGLE_CLOUD_VISION_KEY_BASE64"
   }
 }
