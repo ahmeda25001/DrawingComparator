@@ -21,7 +21,7 @@ UPLOADS_DIR = '/tmp'  # Use /tmp for Vercel compatibility
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
 app.config['UPLOAD_FOLDER'] = UPLOADS_DIR
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 
 comparator = DrawingComparator()
 
