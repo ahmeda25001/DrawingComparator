@@ -8,7 +8,7 @@ import json
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/tmp'  # Use /tmp for Vercel compatibility
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}  # Add 'pdf' to allowed extensions
 
 comparator = DrawingComparator()
 
@@ -34,10 +34,10 @@ def compare_drawings():
         return jsonify({'error': 'No selected files'}), 400
     
     if not (allowed_file(file1.filename) and allowed_file(file2.filename)):
-        return jsonify({'error': 'Invalid file type'}), 400
+        return jsonify({'error': 'Invalid file type. Only PNG, JPG, JPEG, and PDF are allowed.'}), 400
     
     try:
-        # Save uploaded files
+        # Save uploaded files to /tmp for serverless compatibility
         filepath1 = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file1.filename))
         filepath2 = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file2.filename))
         
@@ -46,10 +46,6 @@ def compare_drawings():
         
         # Compare drawings using Google Cloud Vision
         result = comparator.compare_drawings(filepath1, filepath2)
-        
-        # Clean up uploaded files
-        os.remove(filepath1)
-        os.remove(filepath2)
         
         # Return result as JSON
         return jsonify({
