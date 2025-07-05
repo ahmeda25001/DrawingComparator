@@ -36,6 +36,11 @@ class DrawingComparator:
         self.bucket_name = os.environ.get("GOOGLE_CLOUD_STORAGE_BUCKET")
         if not self.bucket_name:
             raise Exception("Environment variable GOOGLE_CLOUD_STORAGE_BUCKET is not set.")
+        
+        # Check if the bucket exists
+        bucket = self.storage_client.bucket(self.bucket_name)
+        if not bucket.exists():
+            raise Exception(f"Bucket '{self.bucket_name}' does not exist. Please create it in your Google Cloud project.")
 
     def upload_to_gcs(self, file_path: str) -> str:
         """Upload a file to Google Cloud Storage and return its GCS URI."""
