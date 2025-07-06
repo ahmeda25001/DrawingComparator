@@ -186,6 +186,12 @@
             It does <b>not</b> analyze image content or extract text from drawings.<br>
             Powered by AI; results may contain mistakes.
         </div>
+        <div id="chatgpt-section" style="margin-top: 2rem; display: none;">
+            <h3>Ask ChatGPT</h3>
+            <textarea id="question" placeholder="Ask a question about the comparison..." rows="4" style="width: 100%; padding: 0.8rem; border-radius: 0.8rem; border: 1.5px solid #e0e0f0;"></textarea>
+            <button id="askBtn" style="margin-top: 1rem;">Ask ChatGPT</button>
+            <div id="chatgpt-response" style="margin-top: 1rem; padding: 1rem; border-radius: 0.8rem; background: #f0f6ff; display: none;"></div>
+        </div>
     </div>
 
     <script>
@@ -212,18 +218,21 @@
                     document.getElementById('differences').textContent = 
                         data.differences && data.differences.length > 0 ? data.differences.join('\n') : 'No major differences detected.';
                     document.getElementById('downloadBtn').style.display = 'inline-block';
+                    document.getElementById('chatgpt-section').style.display = 'block';
                 } else {
                     const errorData = await response.json().catch(() => ({}));
                     document.getElementById('error').textContent = errorData.error || 'An error occurred.';
                     document.getElementById('error').style.display = 'block';
                     document.getElementById('result').style.display = 'none';
                     document.getElementById('downloadBtn').style.display = 'none';
+                    document.getElementById('chatgpt-section').style.display = 'none';
                 }
             } catch (error) {
                 document.getElementById('error').textContent = error.message;
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('result').style.display = 'none';
                 document.getElementById('downloadBtn').style.display = 'none';
+                document.getElementById('chatgpt-section').style.display = 'none';
             }
         });
 
@@ -251,6 +260,36 @@
             } catch (error) {
                 alert('Failed to download result.');
             }
+        });
+
+        document.getElementById('askBtn').addEventListener('click', async () => {
+            const question = document.getElementById('question').value.trim();
+            if (!question || !lastResult) {
+                alert('Please enter a question and ensure comparison results are available.');
+                return;
+            }
+            try {
+                const response = await fetch('/ask_question', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, comparison_result: lastResult })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('chatgpt-response').textContent = data.answer;
+                    document.getElementById('chatgpt-response').style.display = 'block';
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    alert(errorData.error || 'An error occurred.');
+                }
+            } catch (error) {
+                alert('Failed to get response from ChatGPT.');
+            }
+        });
+
+        // Show ChatGPT section when comparison results are available
+        document.getElementById('uploadForm').addEventListener('submit', () => {
+            document.getElementById('chatgpt-section').style.display = 'block';
         });
     </script>
 </body>

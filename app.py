@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from drawing_comparator import DrawingComparator
 import io
 import json
+import openai  # Import OpenAI library
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/tmp'  # Use /tmp for Vercel compatibility
@@ -11,6 +12,11 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}  # Add 'pdf' to allowed extensions
 
 comparator = DrawingComparator()
+
+# Set OpenAI API key from environment variable
+openai.api_key = os.environ.get("OPENAI_API_KEY")
+if not openai.api_key:
+    raise Exception("Environment variable OPENAI_API_KEY is not set.")
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -75,6 +81,40 @@ def download_result():
             download_name='comparison_result.json',
             mimetype='application/json'
         )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/ask_question', methods=['POST'])
+def ask_question():
+    """Endpoint to ask ChatGPT questions about the comparison results."""
+    try:
+        data = request.get_json()
+        if not data or 'question' not in data or 'comparison_result' not in data:
+            return jsonify({'error': 'Invalid request. Provide a question and comparison result.'}), 400
+        
+        question = data['question']
+        comparison_result = data['comparison_result']
+        
+        # Prepare context for ChatGPT
+        context = f"""
+        The following is a comparison of two drawings:
+        Similarity Score: {comparison_result['similarity_score']:.2%}
+        Differences: {comparison_result['differences']}
+        File 1 Text: {comparison_result['file1_text']}
+        File 2 Text: {comparison_result['file2_text']}
+        """
+        
+        # Use ChatGPT to answer the question
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an expert in analyzing text differences and providing insights."},
+                {"role": "user", "content": f"{context}\n\nQuestion: {question}"}
+            ]
+        )
+        
+        answer = response['choices'][0]['message']['content']
+        return jsonify({'answer': answer})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
