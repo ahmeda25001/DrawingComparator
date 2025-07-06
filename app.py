@@ -104,19 +104,25 @@ def ask_question():
         File 2 Text: {comparison_result['file2_text']}
         """
         
-        # Use ChatGPT to answer the question
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are an expert in analyzing text differences and providing insights."},
-                {"role": "user", "content": f"{context}\n\nQuestion: {question}"}
-            ]
-        )
+        # Validate OpenAI API key
+        if not openai.api_key:
+            return jsonify({'error': 'OpenAI API key is not set. Please configure the environment variable OPENAI_API_KEY.'}), 500
         
-        answer = response['choices'][0]['message']['content']
-        return jsonify({'answer': answer})
+        try:
+            # Use ChatGPT to answer the question
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are an expert in analyzing text differences and providing insights."},
+                    {"role": "user", "content": f"{context}\n\nQuestion: {question}"}
+                ]
+            )
+            answer = response['choices'][0]['message']['content']
+            return jsonify({'answer': answer})
+        except openai.error.OpenAIError as api_error:
+            return jsonify({'error': f"OpenAI API error: {str(api_error)}"}), 500
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f"Unexpected error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
