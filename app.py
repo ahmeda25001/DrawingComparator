@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # Load environment before other imports
+
 from flask import Flask, request, render_template, jsonify, send_file
 import os
 from werkzeug.utils import secure_filename
@@ -11,7 +14,9 @@ app.config['UPLOAD_FOLDER'] = '/tmp'  # Use /tmp for Vercel compatibility
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}  # Add 'pdf' to allowed extensions
 
-comparator = DrawingComparator()
+comparator = DrawingComparator()  # Now env variables are loaded
+
+print("GOOGLE_CLOUD_VISION_KEY:", os.environ.get("GOOGLE_CLOUD_VISION_KEY_PATH"))  # Debug statement
 
 # Set OpenAI API key from environment variable
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -109,15 +114,15 @@ def ask_question():
             return jsonify({'error': 'OpenAI API key is not set. Please configure the environment variable OPENAI_API_KEY.'}), 500
         
         try:
-            # Use ChatGPT to answer the question
-            response = openai.chat.completions.create(
+            # Use ChatGPT to answer the question (using older API syntax)
+            response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are an expert in analyzing text differences and providing insights."},
                     {"role": "user", "content": f"{context}\n\nQuestion: {question}"}
                 ]
             )
-            answer = response['choices'][0]['message']['content']
+            answer = response.choices[0].message['content']
             return jsonify({'answer': answer})
         except openai.error.OpenAIError as api_error:
             return jsonify({'error': f"OpenAI API error: {str(api_error)}"}), 500

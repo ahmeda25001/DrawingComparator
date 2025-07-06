@@ -8,6 +8,7 @@ from google.cloud import vision
 from google.cloud import storage  # Import Google Cloud Storage client
 import tempfile  # For creating temporary files in serverless environments
 import json  # Import json module for decoding the key
+from dotenv import load_dotenv
 
 @dataclass
 class ComparisonResult:
@@ -20,17 +21,16 @@ class ComparisonResult:
 class DrawingComparator:
     def __init__(self):
         """Initialize the DrawingComparator with Google Cloud Vision and Storage clients."""
-        # Decode the base64-encoded key from the environment variable
-        encoded_key = os.environ.get("GOOGLE_CLOUD_VISION_KEY_BASE64")
-        if not encoded_key:
-            raise Exception("Environment variable GOOGLE_CLOUD_VISION_KEY_BASE64 is not set.")
+        # Load the path to the JSON key file from the environment variable
+        key_path = os.getenv("GOOGLE_CLOUD_VISION_KEY_PATH")
+        if not key_path or not os.path.exists(key_path):
+            raise Exception("Environment variable GOOGLE_CLOUD_VISION_KEY_PATH is not set or the file does not exist.")
         
-        # Decode the key and initialize the Vision client with credentials
-        decoded_key = base64.b64decode(encoded_key).decode("utf-8")
-        self.client = vision.ImageAnnotatorClient.from_service_account_info(json.loads(decoded_key))
+        # Initialize the Vision client with credentials from the JSON key file
+        self.client = vision.ImageAnnotatorClient.from_service_account_file(key_path)
         
-        # Initialize Google Cloud Storage client
-        self.storage_client = storage.Client.from_service_account_info(json.loads(decoded_key))
+        # Initialize Google Cloud Storage client using from_service_account_json
+        self.storage_client = storage.Client.from_service_account_json(key_path)
         
         # Get the bucket name from the environment variable
         self.bucket_name = os.environ.get("GOOGLE_CLOUD_STORAGE_BUCKET")
