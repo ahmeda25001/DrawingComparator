@@ -110,7 +110,7 @@ def ask_question():
         
         try:
             # Use ChatGPT to answer the question
-            response = openai.ChatCompletion.create(
+            response = openai.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are an expert in analyzing text differences and providing insights."},
