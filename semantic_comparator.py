@@ -120,7 +120,7 @@ Respond with only a JSON object:
 }}
 """
     
-    def compare_with_gpt(self, text1: str, text2: str, model: str = "gpt-4") -> SemanticComparisonResult:
+    def compare_with_gpt(self, text1: str, text2: str, model: str = "gpt-4o") -> SemanticComparisonResult:
         """Use GPT to perform semantic comparison of drawing texts."""
         try:
             # Try detailed analysis first
@@ -218,7 +218,7 @@ Respond with only a JSON object:
     
     def compare_with_different_models(self, text1: str, text2: str) -> Dict[str, SemanticComparisonResult]:
         """Compare using different GPT models and return results."""
-        models = ["gpt-4", "gpt-3.5-turbo"]
+        models = ["gpt-4o", "gpt-3.5-turbo"]
         results = {}
         
         for model in models:

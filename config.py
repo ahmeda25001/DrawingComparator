@@ -28,7 +28,7 @@ class Config:
     
     # AI Comparison Settings
     USE_AI_COMPARISON = True  # Enable/disable AI comparison
-    OPENAI_MODEL = "gpt-4"  # or "gpt-3.5-turbo" for faster/cheaper analysis
+    OPENAI_MODEL = "gpt-4o"  # or "gpt-3.5-turbo" for faster/cheaper analysis
     AI_FALLBACK_MODEL = "gpt-3.5-turbo"  # Fallback if primary model fails
     AI_TEMPERATURE = 0.1  # Low temperature for consistent analysis
     AI_MAX_TOKENS = 2000  # Maximum tokens for AI response
