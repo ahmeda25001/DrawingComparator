@@ -8,6 +8,7 @@ from google.cloud import vision
 from google.cloud import storage  # Import Google Cloud Storage client
 import tempfile  # For creating temporary files in serverless environments
 import json  # Import json module for decoding the key
+from semantic_comparator import SemanticComparator, SemanticComparisonResult
 
 @dataclass
 class ComparisonResult:
@@ -16,9 +17,13 @@ class ComparisonResult:
     timestamp: str
     file1_text: str
     file2_text: str
+    # Enhanced fields for AI comparison
+    ai_analysis: SemanticComparisonResult = None
+    comparison_method: str = "basic"  # "basic", "ai", or "hybrid"
+    raw_similarity: float = 0.0
 
 class DrawingComparator:
-    def __init__(self):
+    def __init__(self, use_ai_comparison: bool = True):
         """Initialize the DrawingComparator with Google Cloud Vision and Storage clients."""
         # Decode the base64-encoded key from the environment variable
         encoded_key = os.environ.get("GOOGLE_CLOUD_VISION_KEY_BASE64")
@@ -41,6 +46,23 @@ class DrawingComparator:
         bucket = self.storage_client.bucket(self.bucket_name)
         if not bucket.exists():
             raise Exception(f"Bucket '{self.bucket_name}' does not exist. Please create it in your Google Cloud project.")
+        
+        # Initialize AI comparison if enabled and API key is available
+        self.use_ai_comparison = use_ai_comparison
+        self.semantic_comparator = None
+        
+        if use_ai_comparison:
+            try:
+                openai_key = os.environ.get("OPENAI_API_KEY")
+                if openai_key:
+                    self.semantic_comparator = SemanticComparator(openai_key)
+                    print("✅ AI semantic comparison enabled")
+                else:
+                    print("⚠️  OPENAI_API_KEY not found. Using basic text comparison.")
+                    self.use_ai_comparison = False
+            except Exception as e:
+                print(f"⚠️  Failed to initialize AI comparison: {e}")
+                self.use_ai_comparison = False
 
     def upload_to_gcs(self, file_path: str) -> str:
         """Upload a file to Google Cloud Storage and return its GCS URI."""
@@ -94,8 +116,9 @@ class DrawingComparator:
             if os.path.exists(file2_path):
                 os.remove(file2_path)
 
-        similarity = difflib.SequenceMatcher(None, text1, text2).ratio()
-        differences = list(difflib.unified_diff(
+        # Always calculate basic similarity for comparison
+        raw_similarity = difflib.SequenceMatcher(None, text1, text2).ratio()
+        basic_differences = list(difflib.unified_diff(
             text1.splitlines(),
             text2.splitlines(),
             fromfile='File 1',
@@ -103,13 +126,51 @@ class DrawingComparator:
             lineterm=''
         ))
 
+        # Try AI comparison if enabled
+        ai_analysis = None
+        final_similarity = raw_similarity
+        comparison_method = "basic"
+        final_differences = basic_differences
+
+        if self.use_ai_comparison and self.semantic_comparator:
+            try:
+                print("🤖 Performing AI semantic analysis...")
+                ai_analysis = self.semantic_comparator.compare_with_gpt(text1, text2)
+                final_similarity = ai_analysis.similarity_score
+                final_differences = ai_analysis.semantic_differences
+                comparison_method = "ai"
+                print(f"✅ AI analysis complete. Similarity: {final_similarity:.1%}")
+            except Exception as e:
+                print(f"⚠️  AI comparison failed: {e}")
+                print("📋 Falling back to basic text comparison")
+                comparison_method = "basic_fallback"
+
         return ComparisonResult(
-            similarity_score=similarity,
-            differences=differences,
+            similarity_score=final_similarity,
+            differences=final_differences,
             timestamp=datetime.now().isoformat(),
             file1_text=text1,
-            file2_text=text2
+            file2_text=text2,
+            ai_analysis=ai_analysis,
+            comparison_method=comparison_method,
+            raw_similarity=raw_similarity
         )
+
+    def compare_with_method(self, file1_path: str, file2_path: str, method: str = "auto") -> ComparisonResult:
+        """Compare drawings with specified method: 'basic', 'ai', or 'auto'."""
+        if method == "basic":
+            # Temporarily disable AI for this comparison
+            original_setting = self.use_ai_comparison
+            self.use_ai_comparison = False
+            result = self.compare_drawings(file1_path, file2_path)
+            self.use_ai_comparison = original_setting
+            return result
+        elif method == "ai":
+            if not self.semantic_comparator:
+                raise ValueError("AI comparison not available. Check OPENAI_API_KEY.")
+            return self.compare_drawings(file1_path, file2_path)
+        else:  # auto
+            return self.compare_drawings(file1_path, file2_path)
 
 # Example usage
 if __name__ == "__main__":

@@ -26,6 +26,14 @@ class Config:
     DEFAULT_COMPRESSION_QUALITY = 85
     TARGET_COMPRESSED_SIZE_MB = 15
     
+    # AI Comparison Settings
+    USE_AI_COMPARISON = True  # Enable/disable AI comparison
+    OPENAI_MODEL = "gpt-4"  # or "gpt-3.5-turbo" for faster/cheaper analysis
+    AI_FALLBACK_MODEL = "gpt-3.5-turbo"  # Fallback if primary model fails
+    AI_TEMPERATURE = 0.1  # Low temperature for consistent analysis
+    AI_MAX_TOKENS = 2000  # Maximum tokens for AI response
+    AI_TIMEOUT = 30  # Timeout in seconds for AI requests
+    
     # Error Messages
     ERROR_MESSAGES = {
         'file_too_large': "File size ({file_size}) exceeds the maximum limit ({limit}). Please use a smaller file or compress your image.",
@@ -68,10 +76,13 @@ class Config:
             "vercel_hobby_limit": cls.format_bytes(cls.VERCEL_HOBBY_REQUEST_LIMIT),
             "vercel_pro_limit": cls.format_bytes(cls.VERCEL_PRO_REQUEST_LIMIT),
             "allowed_extensions": list(cls.ALLOWED_EXTENSIONS),
+            "ai_comparison_enabled": cls.USE_AI_COMPARISON,
+            "ai_model": cls.OPENAI_MODEL,
             "recommendations": [
                 f"Keep files under {cls.format_bytes(cls.GOOGLE_VISION_MAX_FILE_SIZE)} for best results",
                 "Use JPEG format for photos to reduce file size",
                 "Compress images before uploading if they're too large",
-                "Consider upgrading to Vercel Pro for larger file support"
+                "Consider upgrading to Vercel Pro for larger file support",
+                "Set OPENAI_API_KEY for intelligent semantic comparison"
             ]
         }

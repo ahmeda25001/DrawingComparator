@@ -187,9 +187,20 @@
         <div id="error" class="error"></div>
         <div id="result" class="result">
             <h3>Comparison Results</h3>
+            <div id="comparisonMethod" style="margin-bottom: 1rem; padding: 0.5rem; background: #f0f8ff; border-radius: 0.5rem; font-size: 0.9rem;"></div>
             <p>Similarity Score: <span id="similarityScore"></span></p>
+            <div id="aiAnalysis" style="display: none;">
+                <h4>🤖 AI Analysis</h4>
+                <p>Confidence: <span id="aiConfidence"></span></p>
+                <div id="aiReasoning" style="background: #f8f9fa; padding: 0.8rem; border-radius: 0.5rem; margin: 0.5rem 0; font-style: italic;"></div>
+                <div id="categoryAnalysis" style="margin: 0.5rem 0;"></div>
+            </div>
             <h4>Key Differences:</h4>
             <div id="differences" class="differences"></div>
+            <div id="technicalAnalysis" style="display: none; margin-top: 1rem;">
+                <h4>📋 Technical Analysis</h4>
+                <div id="technicalDetails"></div>
+            </div>
         </div>
         <button id="downloadBtn" style="display:none;margin-top:1rem;">Download Result</button>
         <div class="disclaimer">
@@ -278,10 +289,98 @@
                     lastResult = data;
                     document.getElementById('error').style.display = 'none';
                     document.getElementById('result').style.display = 'block';
+                    
+                    // Display basic similarity score
                     document.getElementById('similarityScore').textContent = 
                         `${(data.similarity_score * 100).toFixed(2)}%`;
-                    document.getElementById('differences').textContent = 
-                        data.differences && data.differences.length > 0 ? data.differences.join('\n') : 'No major differences detected.';
+                    
+                    // Show comparison method
+                    const methodDiv = document.getElementById('comparisonMethod');
+                    const methodIcon = data.comparison_method === 'ai' ? '🤖' : 
+                                     data.comparison_method === 'basic_fallback' ? '⚠️' : '📊';
+                    methodDiv.textContent = `${methodIcon} Analysis Method: ${data.comparison_method.replace('_', ' ').toUpperCase()}`;
+                    
+                    // Show raw similarity if different from AI similarity
+                    if (data.raw_similarity && Math.abs(data.raw_similarity - data.similarity_score) > 0.01) {
+                        document.getElementById('similarityScore').textContent += 
+                            ` (Text similarity: ${(data.raw_similarity * 100).toFixed(1)}%)`;
+                    }
+                    
+                    // Display AI analysis if available
+                    if (data.ai_analysis) {
+                        const aiDiv = document.getElementById('aiAnalysis');
+                        aiDiv.style.display = 'block';
+                        
+                        document.getElementById('aiConfidence').textContent = 
+                            `${(data.ai_analysis.confidence * 100).toFixed(1)}%`;
+                        
+                        document.getElementById('aiReasoning').textContent = 
+                            data.ai_analysis.reasoning || 'No reasoning provided';
+                        
+                        // Display category analysis
+                        if (data.ai_analysis.categories) {
+                            const categoryDiv = document.getElementById('categoryAnalysis');
+                            let categoryHtml = '<h5>Category Breakdown:</h5>';
+                            for (const [category, score] of Object.entries(data.ai_analysis.categories)) {
+                                const percentage = (score * 100).toFixed(1);
+                                const barColor = score > 0.8 ? '#4CAF50' : score > 0.5 ? '#FF9800' : '#F44336';
+                                categoryHtml += `
+                                    <div style="margin: 0.3rem 0;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>${category.replace('_', ' ').toUpperCase()}</span>
+                                            <span>${percentage}%</span>
+                                        </div>
+                                        <div style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
+                                            <div style="background: ${barColor}; height: 100%; width: ${percentage}%; transition: width 0.3s;"></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            categoryDiv.innerHTML = categoryHtml;
+                        }
+                        
+                        // Display technical analysis
+                        if (data.ai_analysis.technical_analysis) {
+                            const techDiv = document.getElementById('technicalAnalysis');
+                            const techDetails = document.getElementById('technicalDetails');
+                            techDiv.style.display = 'block';
+                            
+                            let techHtml = '';
+                            const analysis = data.ai_analysis.technical_analysis;
+                            
+                            if (analysis.major_differences && analysis.major_differences.length > 0) {
+                                techHtml += '<h6>🔴 Major Differences:</h6><ul>';
+                                analysis.major_differences.forEach(diff => {
+                                    techHtml += `<li>${diff}</li>`;
+                                });
+                                techHtml += '</ul>';
+                            }
+                            
+                            if (analysis.critical_discrepancies && analysis.critical_discrepancies.length > 0) {
+                                techHtml += '<h6>⚠️ Critical Discrepancies:</h6><ul>';
+                                analysis.critical_discrepancies.forEach(disc => {
+                                    techHtml += `<li style="color: #d32f2f; font-weight: bold;">${disc}</li>`;
+                                });
+                                techHtml += '</ul>';
+                            }
+                            
+                            if (analysis.common_elements && analysis.common_elements.length > 0) {
+                                techHtml += '<h6>✅ Common Elements:</h6><ul>';
+                                analysis.common_elements.slice(0, 3).forEach(elem => {
+                                    techHtml += `<li style="color: #388e3c;">${elem}</li>`;
+                                });
+                                techHtml += '</ul>';
+                            }
+                            
+                            techDetails.innerHTML = techHtml || '<p>No detailed technical analysis available.</p>';
+                        }
+                    }
+                    
+                    // Display differences
+                    const differencesText = Array.isArray(data.differences) && data.differences.length > 0 ? 
+                        data.differences.join('\n') : 'No major differences detected.';
+                    document.getElementById('differences').textContent = differencesText;
+                    
                     document.getElementById('downloadBtn').style.display = 'inline-block';
                 } else {
                     const errorData = await response.json().catch(() => ({}));

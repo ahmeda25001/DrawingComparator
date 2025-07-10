@@ -82,7 +82,7 @@ def compare_drawings():
         
         logger.info("Files saved, starting comparison")
         
-        # Compare drawings using Google Cloud Vision
+        # Compare drawings using Google Cloud Vision and AI
         result = comparator.compare_drawings(filepath1, filepath2)
         
         logger.info("Comparison completed")
@@ -95,14 +95,28 @@ def compare_drawings():
         except Exception as e:
             logger.warning(f"Failed to clean up files: {e}")
         
-        # Return result as JSON
-        return jsonify({
+        # Prepare response with enhanced AI data
+        response_data = {
             'similarity_score': result.similarity_score,
             'differences': result.differences,
             'timestamp': result.timestamp,
             'file1_text': result.file1_text,
-            'file2_text': result.file2_text
-        })
+            'file2_text': result.file2_text,
+            'comparison_method': result.comparison_method,
+            'raw_similarity': result.raw_similarity
+        }
+        
+        # Add AI analysis if available
+        if result.ai_analysis:
+            response_data['ai_analysis'] = {
+                'confidence': result.ai_analysis.confidence,
+                'reasoning': result.ai_analysis.reasoning,
+                'categories': result.ai_analysis.categories,
+                'technical_analysis': result.ai_analysis.technical_analysis
+            }
+        
+        # Return result as JSON
+        return jsonify(response_data)
         
     except Exception as e:
         logger.error(f"Error in compare_drawings: {e}")
