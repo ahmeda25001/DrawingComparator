@@ -2,6 +2,14 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Load environment variables from .env file for local development
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("✅ Environment variables loaded from .env file")
+except ImportError:
+    print("⚠️  python-dotenv not installed, using system environment variables")
+
 from flask import Flask, request, render_template, jsonify, send_file
 from werkzeug.utils import secure_filename
 from drawing_comparator import DrawingComparator

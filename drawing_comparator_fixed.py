@@ -193,27 +193,20 @@ class DrawingComparator:
             print("📊 Using basic text comparison (user requested)")
             
         elif method == "ai":
-            # Force AI comparison - provide fallback with user notice
-            print("🤖 AI semantic analysis requested...")
-            
+            # Force AI comparison - fail if not available
             if not self.semantic_comparator:
-                print("❌ AI comparison not available - missing OPENAI_API_KEY")
-                print("📋 Falling back to basic text comparison")
-                comparison_method = "basic_fallback"
-                # Note: We don't raise an error, we fall back gracefully
-            else:
-                try:
-                    print("🤖 Performing AI semantic analysis (user requested)...")
-                    ai_analysis = self.semantic_comparator.compare_with_gpt(text1, text2)
-                    final_similarity = ai_analysis.similarity_score
-                    final_differences = ai_analysis.semantic_differences
-                    comparison_method = "ai"
-                    print(f"✅ AI analysis complete. Similarity: {final_similarity:.1%}")
-                except Exception as e:
-                    print(f"❌ AI comparison failed: {e}")
-                    print("📋 Falling back to basic text comparison")
-                    comparison_method = "basic_fallback"
-                    # Note: We don't raise an error, we fall back gracefully
+                raise ValueError("AI comparison not available. Please set OPENAI_API_KEY environment variable.")
+            
+            print("🤖 Performing AI semantic analysis (user requested)...")
+            try:
+                ai_analysis = self.semantic_comparator.compare_with_gpt(text1, text2)
+                final_similarity = ai_analysis.similarity_score
+                final_differences = ai_analysis.semantic_differences
+                comparison_method = "ai"
+                print(f"✅ AI analysis complete. Similarity: {final_similarity:.1%}")
+            except Exception as e:
+                print(f"❌ AI comparison failed: {e}")
+                raise Exception(f"AI comparison failed: {e}. Please try basic comparison instead.")
                 
         else:  # method == "auto"
             # Try AI first, fallback to basic if it fails

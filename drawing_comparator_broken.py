@@ -155,11 +155,55 @@ class DrawingComparator:
             comparison_method=comparison_method,
             raw_similarity=raw_similarity
         )
+        finally:
+            # Clean up temporary files in serverless environments
+            if os.path.exists(file1_path):
+                os.remove(file1_path)
+            if os.path.exists(file2_path):
+                os.remove(file2_path)
+
+        # Always calculate basic similarity for comparison
+        raw_similarity = difflib.SequenceMatcher(None, text1, text2).ratio()
+        basic_differences = list(difflib.unified_diff(
+            text1.splitlines(),
+            text2.splitlines(),
+            fromfile='File 1',
+            tofile='File 2',
+            lineterm=''
+        ))
+
+        # Try AI comparison if enabled
+        ai_analysis = None
+        final_similarity = raw_similarity
+        comparison_method = "basic"
+        final_differences = basic_differences
+
+        if self.use_ai_comparison and self.semantic_comparator:
+            try:
+                print("🤖 Performing AI semantic analysis...")
+                ai_analysis = self.semantic_comparator.compare_with_gpt(text1, text2)
+                final_similarity = ai_analysis.similarity_score
+                final_differences = ai_analysis.semantic_differences
+                comparison_method = "ai"
+                print(f"✅ AI analysis complete. Similarity: {final_similarity:.1%}")
+            except Exception as e:
+                print(f"⚠️  AI comparison failed: {e}")
+                print("📋 Falling back to basic text comparison")
+                comparison_method = "basic_fallback"
+
+        return ComparisonResult(
+            similarity_score=final_similarity,
+            differences=final_differences,
+            timestamp=datetime.now().isoformat(),
+            file1_text=text1,
+            file2_text=text2,
+            ai_analysis=ai_analysis,
+            comparison_method=comparison_method,
+            raw_similarity=raw_similarity
+        )
 
     def compare_with_method(self, file1_path: str, file2_path: str, method: str = "auto") -> ComparisonResult:
         """Compare drawings with specified method: 'basic', 'ai', or 'auto'."""
-        print(f"🎯 User selected method: {method.upper()}")
-        
         # Extract text first (always needed)
         try:
             text1 = self.extract_text_from_file(file1_path)
@@ -190,30 +234,22 @@ class DrawingComparator:
         if method == "basic":
             # Use basic text comparison only
             comparison_method = "basic"
-            print("📊 Using basic text comparison (user requested)")
+            print("📊 Using basic text comparison")
             
         elif method == "ai":
-            # Force AI comparison - provide fallback with user notice
-            print("🤖 AI semantic analysis requested...")
-            
+            # Force AI comparison
             if not self.semantic_comparator:
-                print("❌ AI comparison not available - missing OPENAI_API_KEY")
-                print("📋 Falling back to basic text comparison")
-                comparison_method = "basic_fallback"
-                # Note: We don't raise an error, we fall back gracefully
-            else:
-                try:
-                    print("🤖 Performing AI semantic analysis (user requested)...")
-                    ai_analysis = self.semantic_comparator.compare_with_gpt(text1, text2)
-                    final_similarity = ai_analysis.similarity_score
-                    final_differences = ai_analysis.semantic_differences
-                    comparison_method = "ai"
-                    print(f"✅ AI analysis complete. Similarity: {final_similarity:.1%}")
-                except Exception as e:
-                    print(f"❌ AI comparison failed: {e}")
-                    print("📋 Falling back to basic text comparison")
-                    comparison_method = "basic_fallback"
-                    # Note: We don't raise an error, we fall back gracefully
+                raise ValueError("AI comparison not available. Please set OPENAI_API_KEY environment variable.")
+            try:
+                print("🤖 Performing AI semantic analysis (user requested)...")
+                ai_analysis = self.semantic_comparator.compare_with_gpt(text1, text2)
+                final_similarity = ai_analysis.similarity_score
+                final_differences = ai_analysis.semantic_differences
+                comparison_method = "ai"
+                print(f"✅ AI analysis complete. Similarity: {final_similarity:.1%}")
+            except Exception as e:
+                print(f"❌ AI comparison failed: {e}")
+                raise Exception(f"AI comparison failed: {e}. Please try basic comparison instead.")
                 
         else:  # method == "auto"
             # Try AI first, fallback to basic if it fails
