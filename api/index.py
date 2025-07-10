@@ -73,6 +73,10 @@ def compare_drawings():
         
         logger.info(f"Processing files: {file1.filename}, {file2.filename}")
         
+        # Get comparison method from form data  
+        comparison_method = request.form.get('comparisonMethod', 'auto')
+        logger.info(f"Using comparison method: {comparison_method}")
+        
         # Save uploaded files
         filepath1 = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file1.filename))
         filepath2 = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file2.filename))
@@ -82,8 +86,8 @@ def compare_drawings():
         
         logger.info("Files saved, starting comparison")
         
-        # Compare drawings using Google Cloud Vision and AI
-        result = comparator.compare_drawings(filepath1, filepath2)
+        # Compare drawings using the specified method
+        result = comparator.compare_with_method(filepath1, filepath2, comparison_method)
         
         logger.info("Comparison completed")
         

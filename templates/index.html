@@ -153,6 +153,31 @@
             color: #8b4513;
             text-align: center;
         }
+        .comparison-method {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .comparison-method label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #5a5a7a;
+        }
+        .comparison-method select {
+            display: block;
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 1rem;
+            border: 1.5px solid #e0e0f0;
+            background: #f7f8fa;
+            font-size: 1rem;
+            color: #3a3a5a;
+            transition: border 0.2s;
+        }
+        .comparison-method select:focus {
+            border: 1.5px solid #21d4fd;
+            outline: none;
+        }
         @media (max-width: 600px) {
             .container {
                 padding: 1.2rem 0.5rem 1.5rem 0.5rem;
@@ -172,6 +197,14 @@
         </div>
         <h1>Drawing Comparator</h1>
         <form id="uploadForm">
+            <div class="comparison-method">
+                <label for="comparisonMethod">Comparison Method:</label>
+                <select id="comparisonMethod" name="comparisonMethod">
+                    <option value="auto">🤖 Auto (AI if available, fallback to Basic)</option>
+                    <option value="ai">🧠 AI Semantic Analysis (GPT-4o)</option>
+                    <option value="basic">📊 Basic Text Comparison</option>
+                </select>
+            </div>
             <div class="file-upload">
                 <label for="file1">Upload First Drawing:</label>
                 <input type="file" id="file1" name="file1" accept=".png,.jpg,.jpeg,.pdf" required>
@@ -187,7 +220,7 @@
         <div id="error" class="error"></div>
         <div id="result" class="result">
             <h3>Comparison Results</h3>
-            <div id="comparisonMethod" style="margin-bottom: 1rem; padding: 0.5rem; background: #f0f8ff; border-radius: 0.5rem; font-size: 0.9rem;"></div>
+            <div id="comparisonMethodResult" style="margin-bottom: 1rem; padding: 0.5rem; background: #f0f8ff; border-radius: 0.5rem; font-size: 0.9rem;"></div>
             <p>Similarity Score: <span id="similarityScore"></span></p>
             <div id="aiAnalysis" style="display: none;">
                 <h4>🤖 AI Analysis</h4>
@@ -204,6 +237,10 @@
         </div>
         <button id="downloadBtn" style="display:none;margin-top:1rem;">Download Result</button>
         <div class="disclaimer">
+            <span role="img" aria-label="info">ℹ️</span> <b>Comparison Methods:</b><br>
+            • <b>Auto:</b> Tries AI analysis first, falls back to basic if unavailable<br>
+            • <b>AI Semantic:</b> Uses GPT-4o for intelligent context-aware comparison<br>
+            • <b>Basic:</b> Simple text matching comparison<br><br>
             <span role="img" aria-label="ai">🤖</span> <b>File Size Limits:</b> Maximum 20MB per file (Google Vision API limit).<br>
             <b>Supported formats:</b> PNG, JPG, JPEG, PDF.<br>
             <span role="img" aria-label="info">ℹ️</span> Large files may take longer to process.
@@ -278,6 +315,7 @@
             const formData = new FormData();
             formData.append('file1', document.getElementById('file1').files[0]);
             formData.append('file2', document.getElementById('file2').files[0]);
+            formData.append('comparisonMethod', document.getElementById('comparisonMethod').value);
             
             try {
                 const response = await fetch('/compare', {
@@ -295,10 +333,31 @@
                         `${(data.similarity_score * 100).toFixed(2)}%`;
                     
                     // Show comparison method
-                    const methodDiv = document.getElementById('comparisonMethod');
-                    const methodIcon = data.comparison_method === 'ai' ? '🤖' : 
-                                     data.comparison_method === 'basic_fallback' ? '⚠️' : '📊';
-                    methodDiv.textContent = `${methodIcon} Analysis Method: ${data.comparison_method.replace('_', ' ').toUpperCase()}`;
+                    const methodDiv = document.getElementById('comparisonMethodResult');
+                    const selectedMethod = document.getElementById('comparisonMethod').value;
+                    const actualMethod = data.comparison_method;
+                    
+                    let methodIcon = '📊';
+                    let methodText = '';
+                    
+                    if (actualMethod === 'ai') {
+                        methodIcon = '🤖';
+                        methodText = `AI SEMANTIC ANALYSIS (GPT-4o)`;
+                    } else if (actualMethod === 'basic_fallback') {
+                        methodIcon = '⚠️';
+                        methodText = `BASIC TEXT (AI FALLBACK)`;
+                    } else {
+                        methodIcon = '📊';
+                        methodText = `BASIC TEXT COMPARISON`;
+                    }
+                    
+                    if (selectedMethod !== 'auto' && selectedMethod !== actualMethod.replace('_fallback', '')) {
+                        methodText += ` (Requested: ${selectedMethod.toUpperCase()})`;
+                    }
+                    
+                    methodDiv.innerHTML = `${methodIcon} Analysis Method: ${methodText}`;
+                    methodDiv.style.background = actualMethod === 'ai' ? '#e8f5e8' : 
+                                               actualMethod === 'basic_fallback' ? '#fff3cd' : '#f0f8ff';
                     
                     // Show raw similarity if different from AI similarity
                     if (data.raw_similarity && Math.abs(data.raw_similarity - data.similarity_score) > 0.01) {

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import openai
 from openai import OpenAI
+from config import Config
 
 @dataclass
 class SemanticComparisonResult:
@@ -120,8 +121,12 @@ Respond with only a JSON object:
 }}
 """
     
-    def compare_with_gpt(self, text1: str, text2: str, model: str = "gpt-4o") -> SemanticComparisonResult:
+    def compare_with_gpt(self, text1: str, text2: str, model: str = None) -> SemanticComparisonResult:
         """Use GPT to perform semantic comparison of drawing texts."""
+        # Use configured model if none specified
+        if model is None:
+            model = Config.OPENAI_MODEL
+            
         try:
             # Try detailed analysis first
             prompt = self.create_comparison_prompt(text1, text2)
@@ -132,8 +137,8 @@ Respond with only a JSON object:
                     {"role": "system", "content": "You are an expert structural engineer and technical drawing analyst."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.1,  # Low temperature for consistent analysis
-                max_tokens=2000
+                temperature=Config.AI_TEMPERATURE,
+                max_tokens=Config.AI_MAX_TOKENS
             )
             
             result_text = response.choices[0].message.content
@@ -165,8 +170,12 @@ Respond with only a JSON object:
             print(f"Detailed analysis failed: {e}")
             return self._fallback_simple_comparison(text1, text2, model)
     
-    def _fallback_simple_comparison(self, text1: str, text2: str, model: str) -> SemanticComparisonResult:
+    def _fallback_simple_comparison(self, text1: str, text2: str, model: str = None) -> SemanticComparisonResult:
         """Fallback to simple comparison if detailed analysis fails."""
+        # Use fallback model if none specified
+        if model is None:
+            model = Config.AI_FALLBACK_MODEL
+            
         try:
             prompt = self.create_simple_comparison_prompt(text1, text2)
             
@@ -176,7 +185,7 @@ Respond with only a JSON object:
                     {"role": "system", "content": "You are a technical drawing analyst."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.1,
+                temperature=Config.AI_TEMPERATURE,
                 max_tokens=500
             )
             
@@ -218,7 +227,7 @@ Respond with only a JSON object:
     
     def compare_with_different_models(self, text1: str, text2: str) -> Dict[str, SemanticComparisonResult]:
         """Compare using different GPT models and return results."""
-        models = ["gpt-4o", "gpt-3.5-turbo"]
+        models = [Config.OPENAI_MODEL, Config.AI_FALLBACK_MODEL]
         results = {}
         
         for model in models:
