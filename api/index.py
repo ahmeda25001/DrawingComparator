@@ -5,6 +5,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flask import Flask, request, render_template, jsonify, send_file
 from werkzeug.utils import secure_filename
 from drawing_comparator import DrawingComparator
+from file_size_handler import FileSizeHandler
+from config import Config
 import io
 import json
 import logging
@@ -16,12 +18,11 @@ logger = logging.getLogger(__name__)
 # Get the absolute path to the project root (main directory)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
-UPLOADS_DIR = '/tmp'  # Use /tmp for Vercel compatibility
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
-app.config['UPLOAD_FOLDER'] = UPLOADS_DIR
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+app.config['UPLOAD_FOLDER'] = Config.UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = Config.FLASK_MAX_CONTENT_LENGTH
+ALLOWED_EXTENSIONS = Config.ALLOWED_EXTENSIONS
 
 comparator = DrawingComparator()
 
@@ -61,6 +62,15 @@ def compare_drawings():
         if not (allowed_file(file1.filename) and allowed_file(file2.filename)):
             return jsonify({'error': 'Invalid file type'}), 400
         
+        # Validate file sizes with detailed error messages
+        is_valid1, error_msg1, size1 = FileSizeHandler.validate_file_size(file1, file1.filename)
+        if not is_valid1:
+            return jsonify({'error': error_msg1, 'file_size': FileSizeHandler.format_file_size(size1)}), 413
+        
+        is_valid2, error_msg2, size2 = FileSizeHandler.validate_file_size(file2, file2.filename)
+        if not is_valid2:
+            return jsonify({'error': error_msg2, 'file_size': FileSizeHandler.format_file_size(size2)}), 413
+        
         logger.info(f"Processing files: {file1.filename}, {file2.filename}")
         
         # Save uploaded files
@@ -96,6 +106,16 @@ def compare_drawings():
         
     except Exception as e:
         logger.error(f"Error in compare_drawings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/file-limits', methods=['GET'])
+def get_file_limits():
+    """Return information about file size limits."""
+    try:
+        limits_info = Config.get_limits_info()
+        return jsonify(limits_info)
+    except Exception as e:
+        logger.error(f"Error getting file limits: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/download_result', methods=['POST'])

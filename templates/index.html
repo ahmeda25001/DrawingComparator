@@ -144,6 +144,15 @@
             font-size: 0.9rem;
             color: #3a3a5a;
         }
+        .file-info {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            background: #fff8dc;
+            font-size: 0.8rem;
+            color: #8b4513;
+            text-align: center;
+        }
         @media (max-width: 600px) {
             .container {
                 padding: 1.2rem 0.5rem 1.5rem 0.5rem;
@@ -166,10 +175,12 @@
             <div class="file-upload">
                 <label for="file1">Upload First Drawing:</label>
                 <input type="file" id="file1" name="file1" accept=".png,.jpg,.jpeg,.pdf" required>
+                <div id="file1Info" class="file-info" style="display:none;"></div>
             </div>
             <div class="file-upload">
                 <label for="file2">Upload Second Drawing:</label>
                 <input type="file" id="file2" name="file2" accept=".png,.jpg,.jpeg,.pdf" required>
+                <div id="file2Info" class="file-info" style="display:none;"></div>
             </div>
             <button type="submit">Compare Drawings</button>
         </form>
@@ -182,14 +193,74 @@
         </div>
         <button id="downloadBtn" style="display:none;margin-top:1rem;">Download Result</button>
         <div class="disclaimer">
-            <span role="img" aria-label="ai">🤖</span> <b>Disclaimer:</b> This tool compares <b>file properties</b> (size, format, hash).<br>
-            It does <b>not</b> analyze image content or extract text from drawings.<br>
-            Powered by AI; results may contain mistakes.
+            <span role="img" aria-label="ai">🤖</span> <b>File Size Limits:</b> Maximum 20MB per file (Google Vision API limit).<br>
+            <b>Supported formats:</b> PNG, JPG, JPEG, PDF.<br>
+            <span role="img" aria-label="info">ℹ️</span> Large files may take longer to process.
         </div>
     </div>
 
     <script>
         let lastResult = null;
+        
+        // Function to format file size
+        function formatFileSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            
+            return `${size.toFixed(2)} ${units[unitIndex]}`;
+        }
+        
+        // File input change handlers
+        document.getElementById('file1').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const infoDiv = document.getElementById('file1Info');
+            if (file) {
+                const size = formatFileSize(file.size);
+                const maxSize = 20 * 1024 * 1024; // 20MB
+                infoDiv.textContent = `File size: ${size}`;
+                infoDiv.style.display = 'block';
+                if (file.size > maxSize) {
+                    infoDiv.style.background = '#ffe6e6';
+                    infoDiv.style.color = '#cc0000';
+                    infoDiv.textContent += ' ⚠️ File too large (max 20MB)';
+                } else {
+                    infoDiv.style.background = '#e6ffe6';
+                    infoDiv.style.color = '#006600';
+                    infoDiv.textContent += ' ✓ Size OK';
+                }
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('file2').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const infoDiv = document.getElementById('file2Info');
+            if (file) {
+                const size = formatFileSize(file.size);
+                const maxSize = 20 * 1024 * 1024; // 20MB
+                infoDiv.textContent = `File size: ${size}`;
+                infoDiv.style.display = 'block';
+                if (file.size > maxSize) {
+                    infoDiv.style.background = '#ffe6e6';
+                    infoDiv.style.color = '#cc0000';
+                    infoDiv.textContent += ' ⚠️ File too large (max 20MB)';
+                } else {
+                    infoDiv.style.background = '#e6ffe6';
+                    infoDiv.style.color = '#006600';
+                    infoDiv.textContent += ' ✓ Size OK';
+                }
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        });
+        
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -214,7 +285,19 @@
                     document.getElementById('downloadBtn').style.display = 'inline-block';
                 } else {
                     const errorData = await response.json().catch(() => ({}));
-                    document.getElementById('error').textContent = errorData.error || 'An error occurred.';
+                    let errorMessage = errorData.error || 'An error occurred.';
+                    
+                    // Add file size info if available
+                    if (errorData.file_size) {
+                        errorMessage += ` (File size: ${errorData.file_size})`;
+                    }
+                    
+                    // Handle specific error codes
+                    if (response.status === 413) {
+                        errorMessage += '\n\nTip: Try compressing your image or using a smaller file.';
+                    }
+                    
+                    document.getElementById('error').textContent = errorMessage;
                     document.getElementById('error').style.display = 'block';
                     document.getElementById('result').style.display = 'none';
                     document.getElementById('downloadBtn').style.display = 'none';
